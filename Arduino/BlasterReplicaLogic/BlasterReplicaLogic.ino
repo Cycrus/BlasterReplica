@@ -10,15 +10,15 @@
 #include <Adafruit_NeoPixel.h>
 #include <SoftwareSerial.h>
 
-SoftwareSerial softSerial(/*rx =*/4, /*tx =*/5);
+SoftwareSerial softSerial(/*rx =*/10, /*tx =*/11);
 
-#define TRIGGER_BUTTON 10
-#define COLOR_BUTTON 11
+#define TRIGGER_BUTTON 8
+#define COLOR_BUTTON 7
 #define SOUND_BUTTON 12
 
-#define FRONT_LED_PIN 14
-#define LEFT_LED_PIN 15
-#define RIGHT_LED_PIN 16
+#define FRONT_LED_PIN 9
+#define LEFT_LED_PIN 6
+#define RIGHT_LED_PIN 5
 
 #define FRONT_LED_NUM 4
 #define LEFT_LED_NUM 12
