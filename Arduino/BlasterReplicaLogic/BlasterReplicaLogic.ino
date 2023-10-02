@@ -1,4 +1,4 @@
-/* A script to control the working blaster model.
+/* The script to control the working blaster model.
  * Essentially triggers LED and sound when button is pressed.
  * Also offers capabilities to change sound and color profiles.
  * 
