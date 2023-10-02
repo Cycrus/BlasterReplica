@@ -21,8 +21,7 @@ SoftwareSerial softSerial(/*rx =*/10, /*tx =*/11);
 #define RIGHT_LED_PIN 5
 
 #define FRONT_LED_NUM 4
-#define LEFT_LED_NUM 12
-#define RIGHT_LED_NUM 12
+#define SIDE_LED_NUM 12
 
 /**********************************************************/
 class LedSystem
@@ -35,17 +34,23 @@ class LedSystem
     LedSystem()
     {
       front_led = Adafruit_NeoPixel(FRONT_LED_NUM, FRONT_LED_PIN, NEO_GRB + NEO_KHZ800);
-      left_led = Adafruit_NeoPixel(LEFT_LED_NUM, LEFT_LED_PIN, NEO_GRB + NEO_KHZ800);
-      right_led = Adafruit_NeoPixel(RIGHT_LED_NUM, RIGHT_LED_PIN, NEO_GRB + NEO_KHZ800);
+      left_led = Adafruit_NeoPixel(SIDE_LED_NUM, LEFT_LED_PIN, NEO_GRB + NEO_KHZ800);
+      right_led = Adafruit_NeoPixel(SIDE_LED_NUM, RIGHT_LED_PIN, NEO_GRB + NEO_KHZ800);
     
-      COLOR_LIST[0] = front_led.Color(255, 0, 0); // Red
-      COLOR_LIST[1] = front_led.Color(0, 255, 0); // Green
-      COLOR_LIST[2] = front_led.Color(0, 0, 255); // Blue
+      COLOR_LIST[0] = front_led.Color(0, 255, 0); // Red
+      COLOR_LIST[1] = front_led.Color(0, 0, 255); // Blue
+      COLOR_LIST[2] = front_led.Color(255, 0, 0); // Green
+      COLOR_LIST[3] = front_led.Color(255, 255, 0); // Yellow
+      COLOR_LIST[4] = front_led.Color(255, 255, 255); // White
+      COLOR_LIST[5] = front_led.Color(0, 255, 255); // Purple
 
       doPerformAnimation = false;
       curr_color = 0;
       curr_animation_step = 0;
       global_step_counter = 0;
+
+      clearAllLeds();
+      showAllLeds();
     }
 
     /*************************************************
@@ -90,7 +95,9 @@ class LedSystem
 
       if(global_step_counter % step_delay == 0)
       {
-        // TODO: Animation comes here!
+        animateFrontLed();
+        animateSideLed(&left_led);
+        animateSideLed(&right_led);
 
         curr_animation_step++;
         if(curr_animation_step > MAX_ANIMATION_STEP)
@@ -101,6 +108,20 @@ class LedSystem
       }
 
       global_step_counter++;
+    }
+
+    void clearAllLeds()
+    {
+      clearLed(&front_led);
+      clearLed(&right_led);
+      clearLed(&left_led);
+    }
+
+    void showAllLeds()
+    {
+      front_led.show();
+      left_led.show();
+      right_led.show();
     }
 
     /*************************************************
@@ -120,14 +141,88 @@ class LedSystem
 
     bool doPerformAnimation;
 
-    const uint8_t COLOR_NUM = 3;
-    uint32_t COLOR_LIST[3];
+    const uint8_t COLOR_NUM = 6;
+    uint32_t COLOR_LIST[6];
     uint8_t curr_color;
 
     const uint32_t MAX_ANIMATION_STEP = 20;
     uint32_t curr_animation_step;
 
     int global_step_counter;
+
+    void animateFrontLed()
+    {
+      if(animationProgressLowerBound(10))
+      {
+        lightLed(&front_led, 4, 0);
+      }
+
+      if(animationProgressLowerBound(50))
+      {
+        uint32_t max_brightness_step = getAnimationStepPercentage(50);
+        uint32_t min_brightness_step = getAnimationStepPercentage(100);
+        float step_range = min_brightness_step - max_brightness_step;
+
+        float norm_curr_animation_step = (float)(((float)curr_animation_step - (float)max_brightness_step) / (float)step_range);
+        float inv_norm_curr_animation_step = step_range - norm_curr_animation_step;
+
+        uint32_t curr_brightness = inv_norm_curr_animation_step * 255;
+        front_led.setBrightness(curr_brightness);
+      }
+    }
+
+    void animateSideLed(Adafruit_NeoPixel* led)
+    {
+      uint32_t min_slide_step = getAnimationStepPercentage(0);
+      uint32_t max_slide_step = getAnimationStepPercentage(50);
+      uint32_t width = 3;
+
+      float slide_range = max_slide_step - min_slide_step;
+      float norm_pixel_start = (float)(((float)curr_animation_step - (float)min_slide_step) / (float)slide_range);
+      uint32_t proj_pixel_start = norm_pixel_start * SIDE_LED_NUM;
+      
+      lightLed(led, width, proj_pixel_start);
+    }
+
+    uint32_t getAnimationStepPercentage(uint8_t percentage)
+    {
+      if(percentage > 100)
+        percentage = 100;
+
+      return (MAX_ANIMATION_STEP / 100) * percentage;
+    }
+
+    uint32_t getCurrentAnimationProgressPercentage()
+    {
+      return (MAX_ANIMATION_STEP * 100 / curr_animation_step);
+    }
+
+    void lightLed(Adafruit_NeoPixel* led, uint8_t pixel_count, uint8_t start)
+    {
+      led->fill(COLOR_LIST[curr_color], start, pixel_count);
+    }
+
+    void clearLed(Adafruit_NeoPixel* led)
+    {
+      led->setBrightness(255);
+      led->clear();
+    }
+
+    bool animationProgressLowerBound(uint8_t percentage)
+    {
+      if(percentage > 100)
+        percentage = 100;
+
+      return ((curr_animation_step * 100) / (MAX_ANIMATION_STEP)) >= percentage;
+    }
+
+    bool animationProgressUpperBound(uint8_t percentage)
+    {
+      if(percentage > 100)
+        percentage = 100;
+
+      return ((curr_animation_step * 100) / (MAX_ANIMATION_STEP)) < percentage;
+    }
 };
 
 /**********************************************************/
@@ -224,6 +319,7 @@ class ButtonSystem
       trigger_pressed = false;
       color_pressed = false;
       sound_pressed = false;
+      button_ignore_timer = 0;
     }
 
     /*************************************************
@@ -232,7 +328,8 @@ class ButtonSystem
      */
     bool isTriggerPressed()
     {
-      checkButton(TRIGGER_BUTTON, &trigger_pressed);
+      bool trigger = checkButton(TRIGGER_BUTTON, &trigger_pressed);
+      return trigger;
     }
 
     /*************************************************
@@ -241,24 +338,57 @@ class ButtonSystem
      */
     bool isColorPressed()
     {
-      checkButton(COLOR_BUTTON, &color_pressed);
+      bool button = checkButton(COLOR_BUTTON, &color_pressed);
+      if(button)
+      {
+        button_ignore_timer = 2000;
+      }
+      return button;
     }
 
     /*************************************************
      * Checks if the sound selection button is currently pressed.
+     * @return bool True if the button has been pressed.
      */
     bool isSoundPressed()
     {
-      checkButton(SOUND_BUTTON, &sound_pressed);
+      bool button = checkButton(SOUND_BUTTON, &sound_pressed);
+      if(button)
+      {
+        button_ignore_timer = 2000;
+      }
+      return button;
+    }
+
+    void updateButtonTimer()
+    {
+      if(button_ignore_timer == 0)
+        return;
+        
+      uint32_t curr_button_time = millis();
+      uint32_t prev_button_time = button_ignore_timer;
+
+      button_ignore_timer -= (curr_button_time - prev_button_time);
+      if(button_ignore_timer > prev_button_time)
+      {
+        button_ignore_timer = 0;
+      }
+
+      prev_button_time = millis();
     }
 
   private:
     bool trigger_pressed;
     bool color_pressed;
     bool sound_pressed;
+    uint32_t button_ignore_timer;
+    uint32_t last_button_timer_check_time;
 
     /*************************************************
      * A general method to check if a certain button was pressed.
+     * @param pin The pin the button is located on.
+     * @param button_state A pointer to the state representation of the button.
+     *                     Used to discard consequtive button pressed.
      * @return bool True if the button has been pressed.
      */
     bool checkButton(uint8_t pin, bool* button_state)
@@ -315,5 +445,8 @@ void loop()
     }
   }
 
+  buttons->updateButtonTimer();
   led->performAnimationStep(10);
+  led->showAllLeds();
+  delay(10);
 }
