@@ -29,6 +29,9 @@ class LedSystem
 {
   public:
 
+    /*************************************************
+     * Constructor. Initializes LED devices.
+     */
     LedSystem()
     {
       front_led = Adafruit_NeoPixel(FRONT_LED_NUM, FRONT_LED_PIN, NEO_GRB + NEO_KHZ800);
@@ -57,13 +60,18 @@ class LedSystem
 
     /*************************************************
      * Returns the current color value.
-     * @return uint32_t The current color value.
+     * @return uint8_t The current color code.
      */
     uint8_t getCurrColorCode()
     {
       return curr_color;
     }
 
+    /*************************************************
+     * Returns the current animation step. Used to check
+     * if configuration attempts are valid or not.
+     * @return uint32_t The current step of the animation progress.
+     */
     uint32_t getAnimationStep()
     {
       return curr_animation_step;
@@ -71,6 +79,9 @@ class LedSystem
 
     /*************************************************
      * Performs a single animation step. Must be called in every iteration of the controller.
+     * @param step_delay The delay in between the individual animation steps measured in 
+     *                   controller cycles. The higher this value, the slower the animation
+     *                   is played.
      */
     void performAnimationStep(int step_delay)
     {
@@ -92,10 +103,13 @@ class LedSystem
       global_step_counter++;
     }
 
+    /*************************************************
+     * Starts the animation by resetting all values.
+     */
     void startAnimation()
     {
-      doPerformAnimation = 0;
-      curr_animation_step = 0;
+      doPerformAnimation = true;
+      curr_animation_step = 1;
       global_step_counter = 0;
     }
 
@@ -121,6 +135,10 @@ class SoundSystem
 {
   public:
 
+    /*************************************************
+     * Constructor. Initializes the software serial audio
+     * driver.
+     */
     SoundSystem()
     {
       softSerial.begin(9600);
@@ -134,6 +152,10 @@ class SoundSystem
       sound_player.volume(20);
     }
 
+
+    /*************************************************
+     * Rotates through all possible sound profiles.
+     */
     void nextSoundProfile()
     {
       curr_sound_num++;
@@ -141,21 +163,34 @@ class SoundSystem
         curr_sound_num = 0;
     }
 
+    /*************************************************
+     * Plays the currently selected trigger sound.
+     */
     void playTriggerSound()
     {
       sound_player.play(curr_sound_num);
     }
 
+    /*************************************************
+     * Returns the currently selected sound code.
+     * @return uint8_t The current sound code.
+     */
     uint8_t getCurrSoundCode()
     {
       return curr_sound_num;
     }
 
+    /*************************************************
+     * Plays the selection soudn of a new color.
+     */
     void playNewColorSound(uint8_t new_color_code)
     {
       sound_player.play(new_color_code + COLOR_TYPE_OFFSET);
     }
 
+    /*************************************************
+     * Plays the selection sound of a new sound.
+     */
     void playNewSoundSound(uint8_t new_sound_code)
     {
       sound_player.play(new_sound_code + SOUND_TYPE_OFFSET);
@@ -177,37 +212,55 @@ class ButtonSystem
 {
   public:
 
-  ButtonSystem()
-  {
-    pinMode(TRIGGER_BUTTON, INPUT);
-    pinMode(COLOR_BUTTON, INPUT);
-    pinMode(SOUND_BUTTON, INPUT);
+    /*************************************************
+    * Constructor. Initializes the buttons as digital inputs.
+    */
+    ButtonSystem()
+    {
+      pinMode(TRIGGER_BUTTON, INPUT);
+      pinMode(COLOR_BUTTON, INPUT);
+      pinMode(SOUND_BUTTON, INPUT);
 
-    trigger_pressed = false;
-    color_pressed = false;
-    sound_pressed = false;
-  }
+      trigger_pressed = false;
+      color_pressed = false;
+      sound_pressed = false;
+    }
 
-  bool isTriggerPressed()
-  {
-    checkButton(TRIGGER_BUTTON, &trigger_pressed);
-  }
+    /*************************************************
+     * Checks if the trigger is currently pressed.
+     * @return bool True if the button has been pressed.
+     */
+    bool isTriggerPressed()
+    {
+      checkButton(TRIGGER_BUTTON, &trigger_pressed);
+    }
 
-  bool isColorPressed()
-  {
-    checkButton(COLOR_BUTTON, &color_pressed);
-  }
+    /*************************************************
+     * Checks if the color selection button is currently pressed.
+     * @return bool True if the button has been pressed.
+     */
+    bool isColorPressed()
+    {
+      checkButton(COLOR_BUTTON, &color_pressed);
+    }
 
-  bool isSoundPressed()
-  {
-    checkButton(SOUND_BUTTON, &sound_pressed);
-  }
+    /*************************************************
+     * Checks if the sound selection button is currently pressed.
+     */
+    bool isSoundPressed()
+    {
+      checkButton(SOUND_BUTTON, &sound_pressed);
+    }
 
   private:
     bool trigger_pressed;
     bool color_pressed;
     bool sound_pressed;
 
+    /*************************************************
+     * A general method to check if a certain button was pressed.
+     * @return bool True if the button has been pressed.
+     */
     bool checkButton(uint8_t pin, bool* button_state)
     {
       if(digitalRead(pin) == HIGH)
