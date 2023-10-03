@@ -37,13 +37,17 @@ class LedSystem
       front_led = Adafruit_NeoPixel(FRONT_LED_NUM, FRONT_LED_PIN, NEO_GRB + NEO_KHZ800);
       left_led = Adafruit_NeoPixel(SIDE_LED_NUM, LEFT_LED_PIN, NEO_GRB + NEO_KHZ800);
       right_led = Adafruit_NeoPixel(SIDE_LED_NUM, RIGHT_LED_PIN, NEO_GRB + NEO_KHZ800);
+
+      front_led.begin();
+      left_led.begin();
+      right_led.begin();
     
-      COLOR_LIST[0] = front_led.Color(0, 255, 0); // Red
+      COLOR_LIST[0] = front_led.Color(255, 0, 0); // Red
       COLOR_LIST[1] = front_led.Color(0, 0, 255); // Blue
-      COLOR_LIST[2] = front_led.Color(255, 0, 0); // Green
+      COLOR_LIST[2] = front_led.Color(0, 255, 0); // Green
       COLOR_LIST[3] = front_led.Color(255, 255, 0); // Yellow
       COLOR_LIST[4] = front_led.Color(255, 255, 255); // White
-      COLOR_LIST[5] = front_led.Color(0, 255, 255); // Purple
+      COLOR_LIST[5] = front_led.Color(255, 0, 255); // Purple
 
       doPerformAnimation = false;
       curr_color = 0;
@@ -156,7 +160,7 @@ class LedSystem
     uint32_t COLOR_LIST[6];
     uint8_t curr_color;
 
-    const uint32_t MAX_ANIMATION_STEP = 20;
+    const uint32_t MAX_ANIMATION_STEP = 30;
     uint32_t curr_animation_step;
 
     int global_step_counter;
@@ -178,7 +182,7 @@ class LedSystem
         float step_range = min_brightness_step - max_brightness_step;
 
         float norm_curr_animation_step = (float)(((float)curr_animation_step - (float)max_brightness_step) / (float)step_range);
-        float inv_norm_curr_animation_step = step_range - norm_curr_animation_step;
+        float inv_norm_curr_animation_step = 1 - norm_curr_animation_step;
 
         uint32_t curr_brightness = inv_norm_curr_animation_step * 255;
         front_led.setBrightness(curr_brightness);
@@ -212,7 +216,7 @@ class LedSystem
       if(percentage > 100)
         percentage = 100;
 
-      return (MAX_ANIMATION_STEP / 100) * percentage;
+      return ((float)MAX_ANIMATION_STEP / (float)100) * (float)percentage;
     }
 
     /*************************************************
@@ -221,7 +225,7 @@ class LedSystem
      */
     uint32_t getCurrentAnimationProgressPercentage()
     {
-      return (MAX_ANIMATION_STEP * 100 / curr_animation_step);
+      return ((float)MAX_ANIMATION_STEP * (float)100 / (float)curr_animation_step);
     }
 
     /*************************************************
@@ -372,6 +376,7 @@ class ButtonSystem
       color_pressed = false;
       sound_pressed = false;
       button_ignore_timer = 0;
+      prev_button_time = 0;
     }
 
     /*************************************************
@@ -380,6 +385,9 @@ class ButtonSystem
      */
     bool isTriggerPressed()
     {
+      if(button_ignore_timer > 0)
+        return false;
+
       bool trigger = checkButton(TRIGGER_BUTTON, &trigger_pressed);
       return trigger;
     }
@@ -390,10 +398,13 @@ class ButtonSystem
      */
     bool isColorPressed()
     {
+      if(button_ignore_timer > 0)
+        return false;
+
       bool button = checkButton(COLOR_BUTTON, &color_pressed);
       if(button)
       {
-        button_ignore_timer = 2000;
+        button_ignore_timer = 1500;
       }
       return button;
     }
@@ -404,10 +415,13 @@ class ButtonSystem
      */
     bool isSoundPressed()
     {
+      if(button_ignore_timer > 0)
+        return false;
+
       bool button = checkButton(SOUND_BUTTON, &sound_pressed);
       if(button)
       {
-        button_ignore_timer = 2000;
+        button_ignore_timer = 1500;
       }
       return button;
     }
@@ -421,23 +435,23 @@ class ButtonSystem
         return;
         
       uint32_t curr_button_time = millis();
-      uint32_t prev_button_time = button_ignore_timer;
 
       button_ignore_timer -= (curr_button_time - prev_button_time);
-      if(button_ignore_timer > prev_button_time)
+      if(button_ignore_timer < 0)
       {
         button_ignore_timer = 0;
       }
 
-      prev_button_time = millis();
+      prev_button_time = curr_button_time;
     }
 
   private:
     bool trigger_pressed;
     bool color_pressed;
     bool sound_pressed;
-    uint32_t button_ignore_timer;
+    int32_t button_ignore_timer;
     uint32_t last_button_timer_check_time;
+    uint32_t prev_button_time;
 
     /*************************************************
      * A general method to check if a certain button was pressed.
@@ -475,14 +489,16 @@ void setup()
 {
   buttons = new ButtonSystem();
   led = new LedSystem();
-  sound = new SoundSystem();
+  //sound = new SoundSystem();
+  Serial.begin(9600);
 }
 
 void loop()
 {
 	if(buttons->isTriggerPressed())
   {
-    sound->playTriggerSound();
+    //sound->playTriggerSound();
+    Serial.println("Trigger!");
     led->startAnimation();
   }
 
@@ -490,18 +506,19 @@ void loop()
   {
     if(buttons->isColorPressed())
     {
+      Serial.println("Color Change.");
       led->nextColorProfile();
-      sound->playNewColorSound(led->getCurrColorCode());
+      //sound->playNewColorSound(led->getCurrColorCode());
     }
 
-    if(buttons->isSoundPressed())
+    /*if(buttons->isSoundPressed())
     {
       sound->nextSoundProfile();
       sound->playNewSoundSound(sound->getCurrSoundCode());
-    }
+    }*/
   }
 
   buttons->updateButtonTimer();
-  led->performAnimationStep(10);
+  led->performAnimationStep(1);
   delay(5);
 }
