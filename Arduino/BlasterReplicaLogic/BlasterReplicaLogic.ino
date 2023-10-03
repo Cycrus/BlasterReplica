@@ -109,7 +109,7 @@ class LedSystem
           curr_animation_step = 0;
           doPerformAnimation = false;
         }
-        led->showAllLeds();
+        showAllLeds();
       }
 
       global_step_counter++;
@@ -329,6 +329,7 @@ class SoundSystem
      */
     void playNewColorSound(uint8_t new_color_code)
     {
+      sound_player.pause();
       sound_player.play(new_color_code + COLOR_TYPE_OFFSET);
     }
 
@@ -337,6 +338,7 @@ class SoundSystem
      */
     void playNewSoundSound(uint8_t new_sound_code)
     {
+      sound_player.pause();
       sound_player.play(new_sound_code + SOUND_TYPE_OFFSET);
     }
 
