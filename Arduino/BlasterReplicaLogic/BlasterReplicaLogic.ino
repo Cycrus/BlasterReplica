@@ -95,6 +95,8 @@ class LedSystem
 
       if(global_step_counter % step_delay == 0)
       {
+        clearAllLeds();
+
         animateFrontLed();
         animateSideLed(&left_led);
         animateSideLed(&right_led);
@@ -102,14 +104,19 @@ class LedSystem
         curr_animation_step++;
         if(curr_animation_step > MAX_ANIMATION_STEP)
         {
+          clearAllLeds();
           curr_animation_step = 0;
           doPerformAnimation = false;
         }
+        led->showAllLeds();
       }
 
       global_step_counter++;
     }
 
+    /*************************************************
+     * Clears the color of all neopixel leds. 
+     */
     void clearAllLeds()
     {
       clearLed(&front_led);
@@ -117,6 +124,9 @@ class LedSystem
       clearLed(&left_led);
     }
 
+    /*************************************************
+     * A wrapper to call the update function of the leds on all led lights. 
+     */
     void showAllLeds()
     {
       front_led.show();
@@ -150,6 +160,9 @@ class LedSystem
 
     int global_step_counter;
 
+    /*************************************************
+     * The animation logic of the front led collection.
+     */
     void animateFrontLed()
     {
       if(animationProgressLowerBound(10))
@@ -171,6 +184,10 @@ class LedSystem
       }
     }
 
+    /*************************************************
+     * The animation logic of the side led collections.
+     * @param led A pointer to the led collection to animate.
+     */
     void animateSideLed(Adafruit_NeoPixel* led)
     {
       uint32_t min_slide_step = getAnimationStepPercentage(0);
@@ -184,6 +201,11 @@ class LedSystem
       lightLed(led, width, proj_pixel_start);
     }
 
+    /*************************************************
+     * Returns the absolute step number of the animation given a percentage (0-100).
+     * @param percentage The percentage to translate.
+     * @return uint32_t The absolute step number translated.
+     */
     uint32_t getAnimationStepPercentage(uint8_t percentage)
     {
       if(percentage > 100)
@@ -192,22 +214,42 @@ class LedSystem
       return (MAX_ANIMATION_STEP / 100) * percentage;
     }
 
+    /*************************************************
+     * Returns the current progress of the animation in a percentage number (0-100).
+     * @return uint32_t The percentage of the current animation progress.
+     */
     uint32_t getCurrentAnimationProgressPercentage()
     {
       return (MAX_ANIMATION_STEP * 100 / curr_animation_step);
     }
 
+    /*************************************************
+     * Lights a led collection with a given number of pixels starting at a certain position.
+     * As a color it takes the currently active color.
+     * @param led A pointer to the led collection to light up.
+     * @param pixel_count The number of pixels to light up.
+     * @param start The id of the first pixel to light up.
+     */
     void lightLed(Adafruit_NeoPixel* led, uint8_t pixel_count, uint8_t start)
     {
       led->fill(COLOR_LIST[curr_color], start, pixel_count);
     }
 
+    /*************************************************
+     * Clears the color of a certain led collection.
+     * @param led A pointer to the led to clear.
+     */
     void clearLed(Adafruit_NeoPixel* led)
     {
       led->setBrightness(255);
       led->clear();
     }
 
+    /*************************************************
+     * Checks if the animation progress is at least the given percentage.
+     * @param percentage The percentage of animation progress to check for.
+     * @return bool True if the animation progress is at least the given percentage.
+     */
     bool animationProgressLowerBound(uint8_t percentage)
     {
       if(percentage > 100)
@@ -216,6 +258,11 @@ class LedSystem
       return ((curr_animation_step * 100) / (MAX_ANIMATION_STEP)) >= percentage;
     }
 
+    /*************************************************
+     * Checks if the animation progress is below the given percentage.
+     * @param percentage The percentage of animation progress to check for.
+     * @return bool True if the animation progress is below the given percentage.
+     */
     bool animationProgressUpperBound(uint8_t percentage)
     {
       if(percentage > 100)
@@ -293,13 +340,13 @@ class SoundSystem
 
   private:
 
-  DFRobotDFPlayerMini sound_player;
+    DFRobotDFPlayerMini sound_player;
 
-  const int SOUND_NUM = 9;
-  uint8_t curr_sound_num;
+    const int SOUND_NUM = 9;
+    uint8_t curr_sound_num;
 
-  const int SOUND_TYPE_OFFSET = 200;
-  const int COLOR_TYPE_OFFSET = 100;
+    const int SOUND_TYPE_OFFSET = 200;
+    const int COLOR_TYPE_OFFSET = 100;
 };
 
 /**********************************************************/
@@ -360,6 +407,9 @@ class ButtonSystem
       return button;
     }
 
+    /*************************************************
+     * Updates the delay timer to allow a button press only every 2 seconds.
+     */
     void updateButtonTimer()
     {
       if(button_ignore_timer == 0)
@@ -447,6 +497,5 @@ void loop()
 
   buttons->updateButtonTimer();
   led->performAnimationStep(10);
-  led->showAllLeds();
-  delay(10);
+  delay(5);
 }
