@@ -21,7 +21,7 @@ SoftwareSerial softSerial(/*rx =*/10, /*tx =*/11);
 #define RIGHT_LED_PIN 5
 
 #define FRONT_LED_NUM 4
-#define SIDE_LED_NUM 12
+#define SIDE_LED_NUM 30
 
 /**********************************************************/
 /**********************************************************/
@@ -34,20 +34,20 @@ class LedSystem
      */
     LedSystem()
     {
-      front_led = Adafruit_NeoPixel(FRONT_LED_NUM, FRONT_LED_PIN, NEO_GRB + NEO_KHZ800);
-      left_led = Adafruit_NeoPixel(SIDE_LED_NUM, LEFT_LED_PIN, NEO_GRB + NEO_KHZ800);
-      right_led = Adafruit_NeoPixel(SIDE_LED_NUM, RIGHT_LED_PIN, NEO_GRB + NEO_KHZ800);
+      front_led = new Adafruit_NeoPixel(FRONT_LED_NUM, FRONT_LED_PIN, NEO_GRB + NEO_KHZ800);
+      left_led = new Adafruit_NeoPixel(SIDE_LED_NUM, LEFT_LED_PIN, NEO_GRB + NEO_KHZ800);
+      right_led = new Adafruit_NeoPixel(SIDE_LED_NUM, RIGHT_LED_PIN, NEO_GRB + NEO_KHZ800);
 
-      front_led.begin();
-      left_led.begin();
-      right_led.begin();
+      front_led->begin();
+      left_led->begin();
+      right_led->begin();
     
-      COLOR_LIST[0] = front_led.Color(255, 0, 0); // Red
-      COLOR_LIST[1] = front_led.Color(0, 0, 255); // Blue
-      COLOR_LIST[2] = front_led.Color(0, 255, 0); // Green
-      COLOR_LIST[3] = front_led.Color(255, 255, 0); // Yellow
-      COLOR_LIST[4] = front_led.Color(255, 255, 255); // White
-      COLOR_LIST[5] = front_led.Color(255, 0, 255); // Purple
+      COLOR_LIST[0] = front_led->Color(255, 0, 0); // Red
+      COLOR_LIST[1] = front_led->Color(0, 0, 255); // Blue
+      COLOR_LIST[2] = front_led->Color(0, 255, 0); // Green
+      COLOR_LIST[3] = front_led->Color(255, 255, 0); // Yellow
+      COLOR_LIST[4] = front_led->Color(255, 255, 255); // White
+      COLOR_LIST[5] = front_led->Color(255, 0, 255); // Purple
 
       doPerformAnimation = false;
       curr_color = 0;
@@ -103,8 +103,8 @@ class LedSystem
         clearAllLeds();
 
         animateFrontLed();
-        animateSideLed(&left_led);
-        animateSideLed(&right_led);
+        animateSideLed(left_led);
+        animateSideLed(right_led);
 
         curr_animation_step++;
         if(curr_animation_step > MAX_ANIMATION_STEP)
@@ -124,9 +124,9 @@ class LedSystem
      */
     void clearAllLeds()
     {
-      clearLed(&front_led);
-      clearLed(&right_led);
-      clearLed(&left_led);
+      clearLed(front_led);
+      clearLed(right_led);
+      clearLed(left_led);
     }
 
     /*************************************************
@@ -134,9 +134,9 @@ class LedSystem
      */
     void showAllLeds()
     {
-      front_led.show();
-      left_led.show();
-      right_led.show();
+      front_led->show();
+      left_led->show();
+      right_led->show();
     }
 
     /*************************************************
@@ -150,9 +150,9 @@ class LedSystem
     }
 
   private:
-    Adafruit_NeoPixel front_led;
-    Adafruit_NeoPixel left_led;
-    Adafruit_NeoPixel right_led;
+    Adafruit_NeoPixel* front_led;
+    Adafruit_NeoPixel* left_led;
+    Adafruit_NeoPixel* right_led;
 
     bool doPerformAnimation;
 
@@ -172,7 +172,8 @@ class LedSystem
     {
       if(animationProgressLowerBound(10))
       {
-        lightLed(&front_led, 4, 0);
+        lightLed(front_led, 4, 0);
+        front_led->setBrightness(255);
       }
 
       if(animationProgressLowerBound(50))
@@ -185,7 +186,8 @@ class LedSystem
         float inv_norm_curr_animation_step = 1 - norm_curr_animation_step;
 
         uint32_t curr_brightness = inv_norm_curr_animation_step * 255;
-        front_led.setBrightness(curr_brightness);
+        lightLed(front_led, 4, 0);
+        front_led->setBrightness(curr_brightness);
       }
     }
 
