@@ -312,6 +312,16 @@ class SoundSystem
       if(curr_sound_num >= SOUND_NUM)
         curr_sound_num = 0;
     }
+	
+	/*************************************************
+     * Plays a welcome message whenever the blaster is
+	 * started.
+     */
+	void playWelcomeSound()
+	{
+		sound_player.play(150);
+		delay(2000);
+	}
 
     /*************************************************
      * Plays the currently selected trigger sound.
@@ -492,6 +502,7 @@ void setup()
   buttons = new ButtonSystem();
   led = new LedSystem();
   //sound = new SoundSystem();
+  sound->playWelcomeSound();
   Serial.begin(9600);
 }
 
