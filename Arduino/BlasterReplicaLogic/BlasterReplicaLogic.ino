@@ -13,8 +13,7 @@
 SoftwareSerial softSerial(/*rx =*/10, /*tx =*/11);
 
 #define TRIGGER_BUTTON 8
-#define COLOR_BUTTON 7
-#define SOUND_BUTTON 12
+#define SETTINGS_BUTTON 7
 
 #define FRONT_LED_PIN 9
 #define LEFT_LED_PIN 6
@@ -299,7 +298,8 @@ class SoundSystem
           delay(0);
       }
       Serial.println("Audio device online.");
-      sound_player.volume(20);
+      volume_setting = 1;
+      sound_player.volume(VOLUME_LIST[volume_setting]);
     }
 
 
@@ -312,6 +312,13 @@ class SoundSystem
       if(curr_sound_num >= SOUND_NUM)
         curr_sound_num = 0;
     }
+
+    void nextVolumeSetting()
+    {
+      volume_setting++;
+      if(volume_setting >= VOLUME_NUM)
+        volume_setting = 0;
+    }
 	
 	/*************************************************
      * Plays a welcome message whenever the blaster is
@@ -319,7 +326,7 @@ class SoundSystem
      */
 	void playWelcomeSound()
 	{
-		sound_player.play(150);
+		sound_player.play(WELCOME_SOUND_OFFSET);
 		delay(2000);
 	}
 
@@ -328,6 +335,7 @@ class SoundSystem
      */
     void playTriggerSound()
     {
+      sound_player.volume(VOLUME_LIST[volume_setting]);
       sound_player.play(curr_sound_num);
     }
 
@@ -340,12 +348,18 @@ class SoundSystem
       return curr_sound_num;
     }
 
+    uint8_t getCurrVolumeLevel()
+    {
+      return volume_setting;
+    }
+
     /*************************************************
      * Plays the selection soudn of a new color.
      */
     void playNewColorSound(uint8_t new_color_code)
     {
       sound_player.pause();
+      sound_player.volume(10);
       sound_player.play(new_color_code + COLOR_TYPE_OFFSET);
     }
 
@@ -355,7 +369,15 @@ class SoundSystem
     void playNewSoundSound(uint8_t new_sound_code)
     {
       sound_player.pause();
+      sound_player.volume(10);
       sound_player.play(new_sound_code + SOUND_TYPE_OFFSET);
+    }
+
+    void playNewVolumeSound(uint8_t new_volume_setting)
+    {
+      sound_player.pause();
+      sound_player.volume(10);
+      sound_player.play(new_volume_setting + VOLUME_TYPE_OFFSET);
     }
 
   private:
@@ -366,11 +388,31 @@ class SoundSystem
     uint8_t curr_sound_num;
 
     const int SOUND_TYPE_OFFSET = 200;
+    const int WELCOME_SOUND_OFFSET = 150;
     const int COLOR_TYPE_OFFSET = 100;
+    const int VOLUME_TYPE_OFFSET = 50;
+
+    const uint8_t VOLUME_NUM = 3;
+    uint8_t volume_setting;
+    uint8_t VOLUME_LIST[3];
 };
 
 /**********************************************************/
 /**********************************************************/
+enum SettingsButtonState
+{
+  NONE,
+  SHORT,
+  LONG
+};
+
+enum SettingsType
+{
+  COLOR,
+  SOUND,
+  VOLUME
+};
+
 class ButtonSystem
 {
   public:
@@ -381,14 +423,11 @@ class ButtonSystem
     ButtonSystem()
     {
       pinMode(TRIGGER_BUTTON, INPUT);
-      pinMode(COLOR_BUTTON, INPUT);
-      pinMode(SOUND_BUTTON, INPUT);
+      pinMode(SETTINGS_BUTTON, INPUT);
 
       trigger_pressed = false;
-      color_pressed = false;
-      sound_pressed = false;
-      button_ignore_timer = 0;
-      prev_button_time = 0;
+      settings_pressed = false;
+      curr_setting_type = SettingsType::COLOR;
     }
 
     /*************************************************
@@ -397,73 +436,52 @@ class ButtonSystem
      */
     bool isTriggerPressed()
     {
-      if(button_ignore_timer > 0)
-        return false;
-
-      bool trigger = checkButton(TRIGGER_BUTTON, &trigger_pressed);
+      bool trigger = checkButtonDown(TRIGGER_BUTTON, &trigger_pressed);
       return trigger;
     }
 
-    /*************************************************
-     * Checks if the color selection button is currently pressed.
-     * @return bool True if the button has been pressed.
-     */
-    bool isColorPressed()
+    SettingsButtonState isSettingsPressed(uint32_t short_time, uint32_t long_time)
     {
-      if(button_ignore_timer > 0)
-        return false;
-
-      bool button = checkButton(COLOR_BUTTON, &color_pressed);
-      if(button)
-      {
-        button_ignore_timer = 1500;
-      }
-      return button;
+      SettingsButtonState button_state = SettingsButtonState::NONE;
+      uint32_t button_pressed_time = checkButtonUp(SETTINGS_BUTTON, &settings_pressed, &settings_press_time);
+      if(button_pressed_time >= long_time)
+        button_state = SettingsButtonState::LONG;
+      else if(button_pressed_time >= short_time)
+        button_state = SettingsButtonState::SHORT;
+      else
+        button_state = SettingsButtonState::NONE;
+      return button_state;
     }
 
-    /*************************************************
-     * Checks if the sound selection button is currently pressed.
-     * @return bool True if the button has been pressed.
-     */
-    bool isSoundPressed()
+    void changeSettingsType()
     {
-      if(button_ignore_timer > 0)
-        return false;
-
-      bool button = checkButton(SOUND_BUTTON, &sound_pressed);
-      if(button)
-      {
-        button_ignore_timer = 1500;
-      }
-      return button;
+        if(curr_setting_type == SettingsType::COLOR)
+        {
+          Serial.println("Settings: SOUND");
+          curr_setting_type = SettingsType::SOUND;
+        }
+        else if(curr_setting_type == SettingsType::SOUND)
+        {
+          Serial.println("Settings: VOLUME");
+          curr_setting_type = SettingsType::VOLUME;
+        }
+        else if(curr_setting_type == SettingsType::VOLUME)
+        {
+          Serial.println("Settings: COLOR");
+          curr_setting_type = SettingsType::COLOR;
+        }
     }
 
-    /*************************************************
-     * Updates the delay timer to allow a button press only every 2 seconds.
-     */
-    void updateButtonTimer()
+    SettingsType getCurrSettingType()
     {
-      if(button_ignore_timer == 0)
-        return;
-        
-      uint32_t curr_button_time = millis();
-
-      button_ignore_timer -= (curr_button_time - prev_button_time);
-      if(button_ignore_timer < 0)
-      {
-        button_ignore_timer = 0;
-      }
-
-      prev_button_time = curr_button_time;
+      return curr_setting_type;
     }
 
   private:
     bool trigger_pressed;
-    bool color_pressed;
-    bool sound_pressed;
-    int32_t button_ignore_timer;
-    uint32_t last_button_timer_check_time;
-    uint32_t prev_button_time;
+    bool settings_pressed;
+    uint32_t settings_press_time;
+    SettingsType curr_setting_type;
 
     /*************************************************
      * A general method to check if a certain button was pressed.
@@ -472,7 +490,7 @@ class ButtonSystem
      *                     Used to discard consequtive button pressed.
      * @return bool True if the button has been pressed.
      */
-    bool checkButton(uint8_t pin, bool* button_state)
+    bool checkButtonDown(uint8_t pin, bool* button_state)
     {
       if(digitalRead(pin) == HIGH)
       {
@@ -489,6 +507,28 @@ class ButtonSystem
 
       return false;
     }
+
+    uint32_t checkButtonUp(uint8_t pin, bool* button_state, uint32_t* button_down_timer)
+    {
+      bool register_button_down = digitalRead(pin) == HIGH && !*button_state;
+      bool register_button_up = digitalRead(pin) == LOW && *button_state;
+
+      if(register_button_down)
+      {
+        Serial.println("Button down");
+        *button_state = true;
+        *button_down_timer = millis();
+      }
+
+      else if(register_button_up)
+      {
+        Serial.println("Button up");
+        *button_state = false;
+        return millis() - *button_down_timer;
+      }
+
+      return 0;
+    }
 };
 
 /**********************************************************/
@@ -502,7 +542,7 @@ void setup()
   buttons = new ButtonSystem();
   led = new LedSystem();
   //sound = new SoundSystem();
-  sound->playWelcomeSound();
+  //sound->playWelcomeSound();
   Serial.begin(9600);
 }
 
@@ -515,23 +555,40 @@ void loop()
     led->startAnimation();
   }
 
+  SettingsButtonState settingsState = buttons->isSettingsPressed(1, 500);
+
   if(led->getAnimationStep() == 0)
   {
-    if(buttons->isColorPressed())
+    if(settingsState == SettingsButtonState::SHORT)
     {
-      Serial.println("Color Change.");
-      led->nextColorProfile();
-      //sound->playNewColorSound(led->getCurrColorCode());
+      if(buttons->getCurrSettingType() == SettingsType::COLOR)
+      {
+        Serial.println("Next color profile");
+        led->nextColorProfile();
+        //sound->playNewColorSound();
+      }
+      else if(buttons->getCurrSettingType() == SettingsType::SOUND)
+      {
+        Serial.println("Next sound profile");
+        sound->nextSoundProfile();
+        //sound->playNewSoundSound();
+      }
+      else if(buttons->getCurrSettingType() == SettingsType::VOLUME)
+      {
+        Serial.println("Next volume setting");
+        sound->nextVolumeSetting();
+        //sound->playNewVolumeSound();
+      }
+      else
+      {
+        Serial.println("Error: Wrong settings type detected.");
+      }
     }
-
-    /*if(buttons->isSoundPressed())
+    else if(settingsState == SettingsButtonState::LONG)
     {
-      sound->nextSoundProfile();
-      sound->playNewSoundSound(sound->getCurrSoundCode());
-    }*/
+      buttons->changeSettingsType();
+    }
   }
-
-  buttons->updateButtonTimer();
   led->performAnimationStep(1);
   delay(5);
 }
