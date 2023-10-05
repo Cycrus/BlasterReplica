@@ -298,6 +298,11 @@ class SoundSystem
           delay(0);
       }
       Serial.println("Audio device online.");
+
+      VOLUME_LIST[0] = 0;
+      VOLUME_LIST[1] = 10;
+      VOLUME_LIST[2] = 20;
+      VOLUME_LIST[3] = 30;
       volume_setting = 1;
       sound_player.volume(VOLUME_LIST[volume_setting]);
     }
@@ -313,6 +318,9 @@ class SoundSystem
         curr_sound_num = 0;
     }
 
+    /*************************************************
+     * Rotates through all possible volume settings.
+     */
     void nextVolumeSetting()
     {
       volume_setting++;
@@ -320,15 +328,15 @@ class SoundSystem
         volume_setting = 0;
     }
 	
-	/*************************************************
+    /*************************************************
      * Plays a welcome message whenever the blaster is
-	 * started.
+     * started.
      */
-	void playWelcomeSound()
-	{
-		sound_player.play(WELCOME_SOUND_OFFSET);
-		delay(2000);
-	}
+    void playWelcomeSound()
+    {
+      sound_player.play(WELCOME_SOUND_OFFSET);
+      delay(2000);
+    }
 
     /*************************************************
      * Plays the currently selected trigger sound.
@@ -373,6 +381,9 @@ class SoundSystem
       sound_player.play(new_sound_code + SOUND_TYPE_OFFSET);
     }
 
+    /*************************************************
+     * Plays the selection sound of a new volume
+     */
     void playNewVolumeSound(uint8_t new_volume_setting)
     {
       sound_player.pause();
@@ -392,9 +403,9 @@ class SoundSystem
     const int COLOR_TYPE_OFFSET = 100;
     const int VOLUME_TYPE_OFFSET = 50;
 
-    const uint8_t VOLUME_NUM = 3;
+    const uint8_t VOLUME_NUM = 4;
     uint8_t volume_setting;
-    uint8_t VOLUME_LIST[3];
+    uint8_t VOLUME_LIST[4];
 };
 
 /**********************************************************/
