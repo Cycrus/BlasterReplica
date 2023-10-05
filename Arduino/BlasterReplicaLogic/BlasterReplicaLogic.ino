@@ -356,13 +356,27 @@ class SoundSystem
       return curr_sound_num;
     }
 
+    /*************************************************
+     * Returns the currently selected volume level id.
+     * @return uint8_t The current volume level id.
+     */
     uint8_t getCurrVolumeLevel()
     {
       return volume_setting;
     }
 
     /*************************************************
-     * Plays the selection soudn of a new color.
+     * Plays the selection sound of a new setting type
+     */
+    void playNewSettingSound(uint8_t new_setting_type_id)
+    {
+      sound_player.pause();
+      sound_player.volume(10);
+      sound_player.play(new_setting_type_id + SETTING_TYPE_OFFSET);
+    }
+
+    /*************************************************
+     * Plays the selection sound of a new color.
      */
     void playNewColorSound(uint8_t new_color_code)
     {
@@ -398,6 +412,7 @@ class SoundSystem
     const int SOUND_NUM = 9;
     uint8_t curr_sound_num;
 
+    const int SETTING_TYPE_OFFSET = 230;
     const int SOUND_TYPE_OFFSET = 200;
     const int WELCOME_SOUND_OFFSET = 150;
     const int COLOR_TYPE_OFFSET = 100;
@@ -464,6 +479,9 @@ class ButtonSystem
       return button_state;
     }
 
+    /*************************************************
+     * Rotates through the different settings typese and assigns the next valid one.
+     */
     void changeSettingsType()
     {
         if(curr_setting_type == SettingsType::COLOR)
@@ -483,9 +501,22 @@ class ButtonSystem
         }
     }
 
-    SettingsType getCurrSettingType()
+    /*************************************************
+     * Returns the id of the current setting type as an uint8.
+     * @return uint8_t The id of the current setting type.
+     */
+    uint8_t getCurrSettingType()
     {
       return curr_setting_type;
+    }
+
+    /*************************************************
+     * Convenience method to delay the controller after
+     * a valid setting button press.
+     */
+    void delayButtonPress()
+    {
+      delay(1000);
     }
 
   private:
@@ -519,6 +550,13 @@ class ButtonSystem
       return false;
     }
 
+    /*************************************************
+     * Checks if a button is released and how long it has been pressed.
+     * @param pin The pin the button is located on.
+     * @param button_state A pointer to a bool variable representing if the button is currently pressed.
+     * @param button_down_timer A pointer to a variable used as a timer how long the button has been pressed.
+     * @return uint32_t The time the button was pressed before being released.
+     */
     uint32_t checkButtonUp(uint8_t pin, bool* button_state, uint32_t* button_down_timer)
     {
       bool register_button_down = digitalRead(pin) == HIGH && !*button_state;
@@ -577,18 +615,21 @@ void loop()
         Serial.println("Next color profile");
         led->nextColorProfile();
         //sound->playNewColorSound();
+        buttons->delayButtonPress();
       }
       else if(buttons->getCurrSettingType() == SettingsType::SOUND)
       {
         Serial.println("Next sound profile");
         sound->nextSoundProfile();
         //sound->playNewSoundSound();
+        buttons->delayButtonPress();
       }
       else if(buttons->getCurrSettingType() == SettingsType::VOLUME)
       {
         Serial.println("Next volume setting");
         sound->nextVolumeSetting();
         //sound->playNewVolumeSound();
+        buttons->delayButtonPress();
       }
       else
       {
@@ -598,6 +639,8 @@ void loop()
     else if(settingsState == SettingsButtonState::LONG)
     {
       buttons->changeSettingsType();
+      //sound->playNewSettingSound(buttons->getCurrSettingType());
+      buttons->delayButtonPress();
     }
   }
   led->performAnimationStep(1);
