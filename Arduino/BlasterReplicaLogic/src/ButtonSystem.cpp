@@ -38,14 +38,14 @@ void ButtonSystem::changeSettingsType()
     }
     else if(curr_setting_type == SettingsType::SOUND)
     {
-      Serial.println("Settings: VOLUME");
-      curr_setting_type = SettingsType::VOLUME;
-    }
-    else if(curr_setting_type == SettingsType::VOLUME)
-    {
       Serial.println("Settings: COLOR");
       curr_setting_type = SettingsType::COLOR;
     }
+    /*else if(curr_setting_type == SettingsType::VOLUME)
+    {
+      Serial.println("Settings: COLOR");
+      curr_setting_type = SettingsType::COLOR;
+    }*/
 }
 
 uint8_t ButtonSystem::getCurrSettingType()

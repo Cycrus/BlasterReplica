@@ -9,7 +9,7 @@ SoundSystem::SoundSystem()
   VOLUME_LIST[1] = 10;
   VOLUME_LIST[2] = 20;
   VOLUME_LIST[3] = 30;
-  volume_setting = 2;
+  volume_setting = 3;
   sound_player->volume(VOLUME_LIST[volume_setting]);
   curr_sound_num = 0;
 }
@@ -36,7 +36,7 @@ void SoundSystem::playWelcomeSound()
 
 void SoundSystem::playTriggerSound()
 {
-  setVolumeShooting();
+  //setVolumeShooting();
   sound_player->advert(curr_sound_num);
 }
 
@@ -52,25 +52,25 @@ uint8_t SoundSystem::getCurrVolumeLevel()
 
 void SoundSystem::playNewSettingSound(uint8_t new_setting_type_id)
 {
-  setVolumeSettings();
+  //setVolumeSettings();
   sound_player->advert(new_setting_type_id + SETTING_TYPE_OFFSET);
 }
 
 void SoundSystem::playNewColorSound(uint8_t new_color_code)
 {
-  setVolumeSettings();
+  //setVolumeSettings();
   sound_player->advert(new_color_code + COLOR_TYPE_OFFSET);
 }
 
 void SoundSystem::playNewSoundSound(uint8_t new_sound_code)
 {
-  setVolumeSettings();
+  //setVolumeSettings();
   sound_player->advert(new_sound_code + SOUND_TYPE_OFFSET);
 }
 
 void SoundSystem::playNewVolumeSound(uint8_t new_volume_setting)
 {
-  setVolumeSettings();
+  //setVolumeSettings();
   sound_player->advert(new_volume_setting + VOLUME_TYPE_OFFSET);
 }
 
