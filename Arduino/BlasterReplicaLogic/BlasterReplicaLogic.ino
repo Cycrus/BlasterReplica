@@ -17,11 +17,11 @@ ButtonSystem* buttons;
 
 void setup()
 {
+  Serial.begin(9600);
   buttons = new ButtonSystem();
   led = new LedSystem();
   sound = new SoundSystem();
-  delay(500);
-  Serial.begin(9600);
+  delay(200);
   sound->keepSystemOnline(true);
   delay(1000);
   sound->playWelcomeSound();
@@ -29,7 +29,7 @@ void setup()
 
 void loop()
 {
-  //sound->keepSystemOnline(false);
+  sound->keepSystemOnline(false);
 
 	if(buttons->isTriggerPressed())
   {
@@ -59,13 +59,13 @@ void loop()
         sound->playNewSoundSound(sound->getCurrSoundCode());
         buttons->delayButtonPress();
       }
-      /*else if(buttons->getCurrSettingType() == SettingsType::VOLUME)
+      else if(buttons->getCurrSettingType() == SettingsType::VOLUME)
       {
         Serial.println("Next volume setting");
         sound->nextVolumeSetting();
         sound->playNewVolumeSound(sound->getCurrVolumeLevel());
         buttons->delayButtonPress();
-      }*/
+      }
       else
       {
         Serial.println("Error: Wrong settings type detected.");

@@ -55,7 +55,7 @@ uint8_t ButtonSystem::getCurrSettingType()
 
 void ButtonSystem::delayButtonPress()
 {
-  delay(1000);
+  delay(400);
 }
 
 bool ButtonSystem::checkButtonDown(uint8_t pin, bool* button_state)

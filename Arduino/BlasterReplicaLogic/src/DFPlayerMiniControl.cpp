@@ -7,7 +7,7 @@ DFPlayerMiniControl::DFPlayerMiniControl(uint8_t rt, uint8_t tx)
   soft_serial->begin(9600);
   delay(500);
   moduleInit();
-  volume(0x10);
+  //volume(0x10);
 }
 
 void DFPlayerMiniControl::execute_CMD(uint8_t Command, uint8_t Data1, uint8_t Data2)
