@@ -7,7 +7,7 @@ The logic and build process of an Arduino controlled, configurable star wars bla
 - Pressing the color button changes the color profile for the trigger.
 
 ## Demonstration
-[![Blaster Demonstration](Images/blaster.jpg | width=100)](https://youtube.com/shorts/_K-AFX4hNyE?feature=share)
+<a href="https://youtube.com/shorts/_K-AFX4hNyE?feature=share"><img src="Images/blaster.jpg" height="400"></a>
 
 ## Hardware
 - [DFPlayer Mini audio driver](https://www.amazon.de/dp/B07Z5D7T63?psc=1&smid=A1X7QLRQH87QA3&ref_=chk_typ_imgToDp)
