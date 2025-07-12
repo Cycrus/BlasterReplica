@@ -1,4 +1,15 @@
-# BlasterReplica
+<div align="center">
+  <img src="Images/blaster_replica_logo.png" alt="Blaster Replica Logo" width="250">
+  <h1>Blaster Replica</h1>
+  <h2>A Cosmetically Functional Star Wars Blaster Replica</h2>
+</div>
+
+<div align="center">
+  <img alt="License" src=https://img.shields.io/badge/License-MIT-green?style=flat-square>
+  <img alt="Platforms" src=https://img.shields.io/badge/Platforms-Arduino-blue?style=flat-square>
+  <img alt="Languages" src=https://img.shields.io/badge/Languages-C++-red?style=flat-square>
+</div>
+
 The logic and build process of an Arduino controlled, configurable star wars blaster replica. Capable of playing sounds and lighting up LEDs.
 
 ## Functions
